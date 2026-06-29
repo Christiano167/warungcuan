@@ -18,6 +18,7 @@ type CartItem = {
 export default function KasirPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const ambilProduk = useCallback(async () => {
@@ -40,6 +41,106 @@ export default function KasirPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     ambilProduk();
   }, [ambilProduk]);
+
+  async function generateNomorTransaksi() {
+    const { count, error } = await supabase
+      .from("transactions")
+      .select("*", { count: "exact", head: true });
+
+    if (error) {
+      console.error(error);
+      return null;
+    }
+
+    const nextNumber = (count ?? 0) + 1;
+    return `TRX-${String(nextNumber).padStart(6, "0")}`;
+  }
+
+  async function bayar() {
+    if (cart.length === 0) return;
+
+    setProcessing(true);
+
+    const nomorTransaksi = await generateNomorTransaksi();
+    if (!nomorTransaksi) {
+      alert("Gagal membuat nomor transaksi");
+      setProcessing(false);
+      return;
+    }
+
+    // 1. Insert ke transactions
+    const { data: trxData, error: trxError } = await supabase
+      .from("transactions")
+      .insert({
+        transaction_number: nomorTransaksi,
+        total: totalHarga,
+        payment_type: "cash",
+      })
+      .select()
+      .single();
+
+    if (trxError || !trxData) {
+      console.error(trxError);
+      alert("Gagal menyimpan transaksi");
+      setProcessing(false);
+      return;
+    }
+
+    // 2. Insert ke transaction_items (satu per produk di cart)
+    const items = cart.map((item) => ({
+      transaction_id: trxData.id,
+      product_id: item.product.id,
+      qty: item.qty,
+      price_snapshot: item.product.price,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("transaction_items")
+      .insert(items);
+
+    if (itemsError) {
+      console.error(itemsError);
+      alert("Gagal menyimpan detail transaksi");
+      setProcessing(false);
+      return;
+    }
+
+    // 3. Update stok tiap produk
+    for (const item of cart) {
+      const stokBaru = item.product.stock - item.qty;
+      const { error: stockError } = await supabase
+        .from("products")
+        .update({ stock: stokBaru })
+        .eq("id", item.product.id);
+
+      if (stockError) {
+        console.error(stockError);
+        alert(`Gagal update stok ${item.product.name}`);
+        setProcessing(false);
+        return;
+      }
+    }
+
+    // 4. Catat ke cashflow
+    const { error: cashflowError } = await supabase.from("cashflow").insert({
+      type: "in",
+      amount: totalHarga,
+      source: "sale",
+      reference_id: trxData.id,
+    });
+
+    if (cashflowError) {
+      console.error(cashflowError);
+      alert("Gagal mencatat cashflow");
+      setProcessing(false);
+      return;
+    }
+
+    alert(`Transaksi ${nomorTransaksi} berhasil!`);
+    setCart([]);
+    ambilProduk();
+    setProcessing(false);
+  }
 
   function tambahKeCart(product: Product) {
     const existing = cart.find((item) => item.product.id === product.id);
@@ -137,10 +238,11 @@ export default function KasirPage() {
               <span>Rp {totalHarga.toLocaleString("id-ID")}</span>
             </div>
             <button
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || processing}
+              onClick={bayar}
               className="w-full bg-green-700 text-white rounded py-2 font-medium disabled:opacity-40"
             >
-              Bayar
+              {processing ? "Memproses..." : "Bayar"}
             </button>
           </div>
         </div>
