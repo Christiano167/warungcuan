@@ -20,6 +20,9 @@ export default function KasirPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showPayment, setShowPayment] = useState(false);
+  const [cashReceived, setCashReceived] = useState("");
+  const [customerName, setCustomerName] = useState("");
 
   const ambilProduk = useCallback(async () => {
     setLoading(true);
@@ -59,6 +62,14 @@ export default function KasirPage() {
   async function bayar() {
     if (cart.length === 0) return;
 
+    const cashValue = parseFloat(cashReceived);
+    const isKurang = cashValue < totalHarga;
+
+    if (isKurang && customerName.trim() === "") {
+      alert("Nama pelanggan wajib diisi untuk bon");
+      return;
+    }
+
     setProcessing(true);
 
     const nomorTransaksi = await generateNomorTransaksi();
@@ -68,13 +79,45 @@ export default function KasirPage() {
       return;
     }
 
+    let customerId: number | null = null;
+
+    // Kalau bon, cari/buat customer dulu
+    if (isKurang) {
+      const { data: existingCustomer } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("name", customerName.trim())
+        .maybeSingle();
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const { data: newCustomer, error: customerError } = await supabase
+          .from("customers")
+          .insert({ name: customerName.trim() })
+          .select()
+          .single();
+
+        if (customerError || !newCustomer) {
+          console.error(customerError);
+          alert("Gagal membuat data pelanggan");
+          setProcessing(false);
+          return;
+        }
+        customerId = newCustomer.id;
+      }
+    }
+
     // 1. Insert ke transactions
     const { data: trxData, error: trxError } = await supabase
       .from("transactions")
       .insert({
         transaction_number: nomorTransaksi,
         total: totalHarga,
-        payment_type: "cash",
+        payment_type: isKurang ? "bon" : "cash",
+        cash_received: cashValue,
+        change: isKurang ? 0 : cashValue - totalHarga,
+        customer_id: customerId,
       })
       .select()
       .single();
@@ -86,7 +129,7 @@ export default function KasirPage() {
       return;
     }
 
-    // 2. Insert ke transaction_items (satu per produk di cart)
+    // 2. Insert ke transaction_items
     const items = cart.map((item) => ({
       transaction_id: trxData.id,
       product_id: item.product.id,
@@ -121,23 +164,68 @@ export default function KasirPage() {
       }
     }
 
-    // 4. Catat ke cashflow
-    const { error: cashflowError } = await supabase.from("cashflow").insert({
-      type: "in",
-      amount: totalHarga,
-      source: "sale",
-      reference_id: trxData.id,
-    });
+    // 4. Kalau bon: catat ke debts + update total_debt customer
+    if (isKurang && customerId) {
+      const kurangAmount = totalHarga - cashValue;
 
-    if (cashflowError) {
-      console.error(cashflowError);
-      alert("Gagal mencatat cashflow");
-      setProcessing(false);
-      return;
+      const { error: debtError } = await supabase.from("debts").insert({
+        customer_id: customerId,
+        amount: kurangAmount,
+        type: "charge",
+        transaction_id: trxData.id,
+      });
+
+      if (debtError) {
+        console.error(debtError);
+        alert("Gagal mencatat hutang");
+        setProcessing(false);
+        return;
+      }
+
+      const { data: custData } = await supabase
+        .from("customers")
+        .select("total_debt")
+        .eq("id", customerId)
+        .single();
+
+      const newTotalDebt = (custData?.total_debt ?? 0) + kurangAmount;
+
+      const { error: updateDebtError } = await supabase
+        .from("customers")
+        .update({ total_debt: newTotalDebt })
+        .eq("id", customerId);
+
+      if (updateDebtError) {
+        console.error(updateDebtError);
+        alert("Gagal update total hutang pelanggan");
+        setProcessing(false);
+        return;
+      }
+    }
+
+    // 5. Cashflow: kalau cash, catat 'sale'. Kalau bon, catat sebesar yang DIBAYAR aja (cashValue), bukan total
+    const cashflowAmount = isKurang ? cashValue : totalHarga;
+    if (cashflowAmount > 0) {
+      const { error: cashflowError } = await supabase.from("cashflow").insert({
+        type: "in",
+        amount: cashflowAmount,
+        source: "sale",
+        reference_id: trxData.id,
+      });
+
+      if (cashflowError) {
+        console.error(cashflowError);
+        alert("Gagal mencatat cashflow");
+        setProcessing(false);
+        return;
+      }
     }
 
     alert(`Transaksi ${nomorTransaksi} berhasil!`);
     setCart([]);
+    setShowPayment(false);
+    setCashReceived("");
+    setCustomerName("");
     ambilProduk();
     setProcessing(false);
   }
@@ -238,12 +326,81 @@ export default function KasirPage() {
               <span>Rp {totalHarga.toLocaleString("id-ID")}</span>
             </div>
             <button
-              disabled={cart.length === 0 || processing}
-              onClick={bayar}
+              disabled={cart.length === 0}
+              onClick={() => setShowPayment(true)}
               className="w-full bg-green-700 text-white rounded py-2 font-medium disabled:opacity-40"
             >
-              {processing ? "Memproses..." : "Bayar"}
+              Bayar
             </button>
+            {showPayment && (
+              <div className="mt-4 border-t pt-4">
+                <label className="block text-sm font-medium mb-1">
+                  Uang Diterima
+                </label>
+                <input
+                  type="number"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  placeholder="0"
+                  className="w-full border rounded px-3 py-2 mb-2"
+                  autoFocus
+                />
+
+                {cashReceived !== "" && (
+                  <div className="text-sm mb-3">
+                    {parseFloat(cashReceived) >= totalHarga ? (
+                      <div className="text-green-700 font-medium">
+                        Kembalian: Rp{" "}
+                        {(parseFloat(cashReceived) - totalHarga).toLocaleString(
+                          "id-ID",
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-red-600 font-medium">
+                        Kurang: Rp{" "}
+                        {(totalHarga - parseFloat(cashReceived)).toLocaleString(
+                          "id-ID",
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  {cashReceived !== "" &&
+                    parseFloat(cashReceived) < totalHarga && (
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium mb-1">
+                          Nama Pelanggan (untuk bon)
+                        </label>
+                        <input
+                          type="text"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          placeholder="Nama pelanggan"
+                          className="w-full border rounded px-3 py-2"
+                        />
+                      </div>
+                    )}
+                  <button
+                    onClick={() => {
+                      setShowPayment(false);
+                      setCashReceived("");
+                    }}
+                    className="flex-1 border rounded py-2 text-sm"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    disabled={processing || cashReceived === ""}
+                    onClick={bayar}
+                    className="flex-1 bg-green-700 text-white rounded py-2 text-sm font-medium disabled:opacity-40"
+                  >
+                    {processing ? "Memproses..." : "Konfirmasi"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
