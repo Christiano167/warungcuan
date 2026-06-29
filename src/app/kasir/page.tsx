@@ -346,6 +346,13 @@ export default function KasirPage() {
                   autoFocus
                 />
 
+                <button
+                  onClick={() => setCashReceived("0")}
+                  className="text-sm text-red-600 mb-3 underline"
+                >
+                  Bon Semua (Belum Bayar)
+                </button>
+
                 {cashReceived !== "" && (
                   <div className="text-sm mb-3">
                     {parseFloat(cashReceived) >= totalHarga ? (
