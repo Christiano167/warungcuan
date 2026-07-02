@@ -4,7 +4,7 @@ import Sidebar from "./components/sidebar";
 
 export const metadata: Metadata = {
   title: "WarungCuan",
-  description: "Aplikasi kasir untuk warung sembako",
+  description: "Aplikasi kasir warung sembako",
 };
 
 export default function RootLayout({
@@ -14,9 +14,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className="flex h-screen overflow-hidden bg-gray-50">
+      <body style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
         <Sidebar />
-        <div className="flex-1 overflow-y-auto bg-gray-50">{children}</div>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            background: "var(--bg)",
+          }}
+        >
+          {children}
+        </div>
       </body>
     </html>
   );
