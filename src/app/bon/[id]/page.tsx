@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Button, Card, Input, PageHeader, Badge, LoadingState, EmptyState } from "@/app/components/ui";
+import { ArrowLeft, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 type Customer = {
   id: number;
@@ -46,7 +48,6 @@ export default function DetailPelangganPage() {
 
     setProcessing(true);
 
-    // 1. Insert ke debts sebagai payment
     const { error: debtError } = await supabase.from("debts").insert({
       customer_id: customer.id,
       amount: amount,
@@ -60,7 +61,6 @@ export default function DetailPelangganPage() {
       return;
     }
 
-    // 2. Update total_debt customer
     const newTotalDebt = customer.total_debt - amount;
     const { error: customerError } = await supabase
       .from("customers")
@@ -74,7 +74,6 @@ export default function DetailPelangganPage() {
       return;
     }
 
-    // 3. Catat ke cashflow (uang pembayaran bon masuk ke laci)
     const { error: cashflowError } = await supabase.from("cashflow").insert({
       type: "in",
       amount: amount,
@@ -131,106 +130,102 @@ export default function DetailPelangganPage() {
     ambilData();
   }, [customerId]);
 
-  if (loading) return <main className="p-6">Memuat...</main>;
-  if (!customer) return <main className="p-6">Pelanggan tidak ditemukan</main>;
+  if (loading) return <main className="p-6 md:p-8"><LoadingState message="Memuat..." /></main>;
+  if (!customer) return <main className="p-6 md:p-8"><p className="text-text-muted text-sm">Pelanggan tidak ditemukan</p></main>;
 
   return (
-    <main className="p-6 max-w-md mx-auto">
-      <Link href="/bon" className="text-sm text-blue-600">
-        ← Kembali
+    <main className="p-6 md:p-8 max-w-2xl">
+      <Link href="/bon" className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text mb-2 transition-all">
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Kembali ke Daftar Bon
       </Link>
 
-      <h1 className="text-xl font-bold mt-2">{customer.name}</h1>
+      <PageHeader title={customer.name} />
       {customer.phone && (
-        <p className="text-sm text-gray-500">{customer.phone}</p>
+        <p className="text-xs text-text-muted mt-1">{customer.phone}</p>
       )}
 
-      <div className="border rounded-lg p-4 my-4 text-center">
-        <div className="text-sm text-gray-500">Total Hutang</div>
-        <div
-          className={`text-2xl font-bold ${
-            customer.total_debt > 0 ? "text-red-600" : "text-green-700"
-          }`}
-        >
+      <Card className="my-6 text-center max-w-md">
+        <div className="text-xs text-text-muted uppercase tracking-wider font-semibold">Total Hutang</div>
+        <div className={`text-2xl font-bold mt-2.5 tabular-nums ${
+          customer.total_debt > 0 ? "text-danger" : "text-accent"
+        }`}>
           Rp {customer.total_debt.toLocaleString("id-ID")}
         </div>
-        <div className="text-xs text-gray-400 mt-1">
-          {customer.total_debt > 0 ? "Aktif" : "Lunas"}
-        </div>
-      </div>
+        <Badge variant={customer.total_debt > 0 ? "danger" : "success"} className="mt-2">
+          {customer.total_debt > 0 ? "Belum Lunas" : "Lunas"}
+        </Badge>
+      </Card>
 
       {customer.total_debt > 0 && !showPayForm && (
-        <button
-          onClick={() => setShowPayForm(true)}
-          className="w-full bg-green-700 text-white rounded py-2 font-medium mb-4"
-        >
+        <Button onClick={() => setShowPayForm(true)} className="w-full max-w-md mb-6">
           Bayar Hutang
-        </button>
+        </Button>
       )}
 
       {showPayForm && (
-        <div className="border rounded-lg p-4 mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Nominal Pembayaran (maks Rp{" "}
-            {customer.total_debt.toLocaleString("id-ID")})
-          </label>
-          <input
+        <Card className="mb-6 max-w-md">
+          <Input
+            label={`Nominal Pembayaran (maks Rp ${customer.total_debt.toLocaleString("id-ID")})`}
             type="number"
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
             placeholder="0"
-            className="w-full border rounded px-3 py-2 mb-3"
-            autoFocus
+            className="mb-4"
           />
           <div className="flex gap-2">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => {
                 setShowPayForm(false);
                 setPayAmount("");
               }}
-              className="flex-1 border rounded py-2 text-sm"
+              className="flex-1"
             >
               Batal
-            </button>
-            <button
+            </Button>
+            <Button
               disabled={processing || payAmount === ""}
               onClick={bayarHutang}
-              className="flex-1 bg-green-700 text-white rounded py-2 text-sm font-medium disabled:opacity-40"
+              loading={processing}
+              className="flex-1"
             >
-              {processing ? "Memproses..." : "Konfirmasi"}
-            </button>
+              Konfirmasi
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
-      <h2 className="font-medium mb-2">Riwayat</h2>
+
+      <h2 className="font-semibold text-text text-sm mb-4">Riwayat</h2>
       {debts.length === 0 ? (
-        <p className="text-gray-400 text-sm">Belum ada riwayat</p>
+        <EmptyState message="Belum ada riwayat" />
       ) : (
-        <ul className="space-y-2">
+        <div className="space-y-3 max-w-xl">
           {debts.map((d) => (
-            <li
-              key={d.id}
-              className="border rounded-lg p-3 flex justify-between text-sm"
-            >
-              <div>
-                <div className="font-medium">
-                  {d.type === "charge" ? "Bon Baru" : "Pembayaran"}
-                </div>
-                <div className="text-gray-400 text-xs">
-                  {new Date(d.created_at).toLocaleString("id-ID")}
+            <Card key={d.id} variant="hoverable" className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-3">
+                {d.type === "charge" ? (
+                  <ArrowUpCircle className="w-5 h-5 text-danger" />
+                ) : (
+                  <ArrowDownCircle className="w-5 h-5 text-accent" />
+                )}
+                <div>
+                  <div className="font-medium text-text">
+                    {d.type === "charge" ? "Bon Baru" : "Pembayaran"}
+                  </div>
+                  <div className="text-text-muted text-[10px] mt-0.5">
+                    {new Date(d.created_at).toLocaleString("id-ID")}
+                  </div>
                 </div>
               </div>
-              <div
-                className={
-                  d.type === "charge" ? "text-red-600" : "text-green-700"
-                }
-              >
-                {d.type === "charge" ? "+" : "-"}Rp{" "}
-                {d.amount.toLocaleString("id-ID")}
+              <div className={`font-semibold tabular-nums flex-shrink-0 ml-3 ${
+                d.type === "charge" ? "text-danger" : "text-accent"
+              }`}>
+                {d.type === "charge" ? "+" : "-"}Rp {d.amount.toLocaleString("id-ID")}
               </div>
-            </li>
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

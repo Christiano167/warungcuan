@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button, Card, Input, PageHeader, LoadingState, EmptyState } from "@/app/components/ui";
+import { Pencil } from "lucide-react";
 
 type Product = {
   id: number;
@@ -106,88 +108,85 @@ export default function Home() {
   }
 
   return (
-    <main className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Manajemen Produk</h1>
+    <main className="p-6 md:p-8">
+      <PageHeader title="Manajemen Produk" />
 
-      <div className="border rounded-lg p-4 mb-6 space-y-2">
-        <input
+      <div className="bg-card border border-border rounded-[10px] p-6 mb-8 space-y-4 shadow-sm max-w-md">
+        <Input
           type="text"
           placeholder="Nama produk"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border rounded px-3 py-2"
         />
-        <input
+        <Input
           type="number"
           placeholder="Harga"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          className="w-full border rounded px-3 py-2"
         />
-        <input
+        <Input
           type="number"
           placeholder="Stok awal (opsional)"
           value={stock}
           onChange={(e) => setStock(e.target.value)}
-          className="w-full border rounded px-3 py-2"
         />
-        <button
-          onClick={tambahProduk}
-          className="w-full bg-green-700 text-white rounded py-2 font-medium"
-        >
+        <Button onClick={tambahProduk} className="w-full">
           Tambah Produk
-        </button>
+        </Button>
       </div>
 
       {loading ? (
-        <p>Memuat produk...</p>
+        <LoadingState message="Memuat produk..." />
+      ) : products.length === 0 ? (
+        <EmptyState message="Belum ada produk" submessage="Tambah produk pertama Anda" />
       ) : (
-        <ul className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {products.map((p) => (
-            <li key={p.id} className="border rounded-lg p-3">
+            <Card key={p.id} variant="hoverable">
               <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-medium">{p.name}</div>
-                  <div className="text-sm text-gray-500">Stok: {p.stock}</div>
+                <div className="min-w-0">
+                  <div className="font-medium text-text truncate">{p.name}</div>
+                  <div className="text-xs text-text-muted mt-1 tabular-nums">Stok: {p.stock}</div>
                 </div>
 
                 {editingId === p.id ? (
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                     <input
                       type="number"
                       value={editPrice}
                       onChange={(e) => setEditPrice(e.target.value)}
-                      className="w-24 border rounded px-2 py-1 text-right"
+                      className="w-24 bg-card border border-border text-text rounded px-2 py-1 text-sm text-right outline-none focus:border-accent"
                     />
-                    <div className="flex gap-2 text-sm">
+                    <div className="flex gap-2 text-xs">
                       <button
                         onClick={() => simpanHargaBaru(p.id)}
-                        className="text-green-700 font-medium"
+                        className="text-accent font-semibold hover:opacity-80 cursor-pointer"
                       >
                         Simpan
                       </button>
-                      <button onClick={batalEdit} className="text-gray-500">
+                      <button onClick={batalEdit} className="text-text-muted hover:text-text cursor-pointer">
                         Batal
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-right">
-                    <div className="font-semibold">
+                  <div className="text-right flex-shrink-0">
+                    <div className="font-semibold text-text tabular-nums">
                       Rp {p.price.toLocaleString("id-ID")}
                     </div>
                     <button
                       onClick={() => mulaiEdit(p)}
-                      className="text-sm text-blue-600"
+                      className="inline-flex items-center gap-1 text-xs text-accent hover:opacity-85 font-medium mt-1 cursor-pointer"
                     >
-                      Edit
+                      <Pencil className="w-3 h-3" />
+                      Edit Harga
                     </button>
                   </div>
                 )}
               </div>
-            </li>
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

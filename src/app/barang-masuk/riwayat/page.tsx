@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Card, PageHeader, LoadingState, EmptyState } from "@/app/components/ui";
+import { ArrowLeft } from "lucide-react";
 
 type Movement = {
   id: number;
@@ -40,46 +42,46 @@ export default function RiwayatBarangMasukPage() {
   }, []);
 
   return (
-    <main className="p-6 max-w-2xl mx-auto">
-      <Link href="/BarangMasuk" className="text-sm text-blue-600">
-        ← Kembali
+    <main className="p-6 md:p-8 max-w-2xl">
+      <Link href="/barang-masuk" className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text mb-2 transition-all">
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Kembali ke Barang Masuk
       </Link>
 
-      <h1 className="text-xl font-bold mt-2 mb-4">Riwayat Barang Masuk</h1>
-        
+      <PageHeader title="Riwayat Barang Masuk" />
+
       {loading ? (
-        <p>Memuat riwayat...</p>
+        <LoadingState message="Memuat riwayat..." />
       ) : movements.length === 0 ? (
-        <p className="text-gray-400 text-sm">Belum ada riwayat</p>
+        <EmptyState message="Belum ada riwayat" />
       ) : (
-        <ul className="space-y-2">
+        <div className="space-y-3.5">
           {movements.map((m) => (
-            <li
+            <Card
               key={m.id}
-              className={`border rounded-lg p-3 flex justify-between text-sm ${
-                m.status === "void" ? "opacity-50" : ""
-              }`}
+              variant={m.status === "void" ? "default" : "hoverable"}
+              className={`flex justify-between items-center text-sm ${m.status === "void" ? "opacity-50" : ""}`}
             >
               <div>
-                <div className="font-medium">
+                <div className="font-semibold text-text flex items-center gap-2">
                   {m.products?.name ?? "Produk tidak diketahui"}
                   {m.status === "void" && (
-                    <span className="text-red-600 ml-2 text-xs">[VOID]</span>
+                    <span className="bg-danger-light text-danger text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Void</span>
                   )}
                 </div>
-                <div className="text-gray-400 text-xs">
+                <div className="text-text-muted text-[10px] mt-1">
                   {new Date(m.created_at).toLocaleString("id-ID")}
                 </div>
               </div>
-              <div className="text-right">
-                <div>Qty: {m.qty}</div>
-                <div className="text-gray-500">
+              <div className="text-right flex-shrink-0 ml-3">
+                <div className="font-medium text-text text-xs tabular-nums">Qty: {m.qty}</div>
+                <div className="font-bold text-accent text-sm mt-0.5 tabular-nums">
                   Rp {(m.cost ?? 0).toLocaleString("id-ID")}
                 </div>
               </div>
-            </li>
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

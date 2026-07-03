@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button, Card, Input, PageHeader, LoadingState, EmptyState } from "@/app/components/ui";
 
 type Expense = {
   id: number;
@@ -78,72 +79,69 @@ export default function PengeluaranPage() {
   }
 
   return (
-    <main className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Pengeluaran Manual</h1>
-      <p className="text-xs text-gray-500 mb-4">
-        Untuk pengeluaran non-stok seperti listrik, plastik, transport, dll.
-      </p>
+    <main className="p-6 md:p-8 max-w-2xl">
+      <PageHeader
+        title="Pengeluaran Manual"
+        description="Untuk pengeluaran non-stok seperti listrik, plastik, transport, dll."
+      />
 
-      <div className="border rounded-lg p-4 space-y-3 mb-6">
-        <div>
-          <label className="block text-sm font-medium mb-1">Nominal (Rp)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0"
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Kategori / Catatan
-          </label>
-          <input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Contoh: Listrik, Plastik, Transport"
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-
-        <button
+      <div className="bg-card border border-border rounded-[10px] p-6 space-y-5 mb-8 max-w-md shadow-sm">
+        <Input
+          label="Nominal (Rp)"
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0"
+        />
+        <Input
+          label="Kategori / Catatan"
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Contoh: Listrik, Plastik, Transport"
+        />
+        <Button
           disabled={processing}
           onClick={simpanPengeluaran}
-          className="w-full bg-green-700 text-white rounded py-2 font-medium disabled:opacity-40"
+          loading={processing}
+          className="w-full"
         >
-          {processing ? "Memproses..." : "Catat Pengeluaran"}
-        </button>
+          Catat Pengeluaran
+        </Button>
       </div>
 
-      <h2 className="font-medium mb-2">Riwayat Pengeluaran</h2>
+      <h2 className="font-semibold text-text text-sm mb-4">Riwayat Pengeluaran</h2>
       {loading ? (
-        <p>Memuat...</p>
+        <LoadingState message="Memuat..." />
       ) : expenses.length === 0 ? (
-        <p className="text-gray-400 text-sm">Belum ada pengeluaran</p>
+        <EmptyState message="Belum ada pengeluaran" />
       ) : (
-        <ul className="space-y-2">
+        <div className="space-y-3.5 max-w-xl">
           {expenses.map((e) => (
-            <li
+            <Card
               key={e.id}
-              className={`border rounded-lg p-3 flex justify-between text-sm ${
+              variant={e.status === "void" ? "default" : "hoverable"}
+              className={`flex justify-between items-center text-sm ${
                 e.status === "void" ? "opacity-50" : ""
               }`}
             >
               <div>
-                <div className="font-medium">{e.note}</div>
-                <div className="text-gray-400 text-xs">
+                <div className="font-semibold text-text flex items-center gap-2">
+                  {e.note}
+                  {e.status === "void" && (
+                    <span className="bg-danger-light text-danger text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Void</span>
+                  )}
+                </div>
+                <div className="text-text-muted text-[10px] mt-1">
                   {new Date(e.created_at).toLocaleString("id-ID")}
                 </div>
               </div>
-              <div className="text-red-600 font-medium">
+              <div className="text-danger font-bold text-sm tabular-nums flex-shrink-0 ml-3">
                 -Rp {e.amount.toLocaleString("id-ID")}
               </div>
-            </li>
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

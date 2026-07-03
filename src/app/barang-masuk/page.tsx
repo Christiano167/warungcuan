@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Button, Card, Input, Select, PageHeader, LoadingState } from "@/app/components/ui";
+import { ArrowRight, Plus, Trash2 } from "lucide-react";
 
 type Product = {
   id: number;
@@ -91,7 +93,6 @@ export default function BarangMasukPage() {
       const totalValue = parseFloat(row.total);
       const costPerUnit = totalValue / qtyValue;
 
-      // 1. Insert ke stock_movements
       const { data: movementData, error: movementError } = await supabase
         .from("stock_movements")
         .insert({
@@ -110,7 +111,6 @@ export default function BarangMasukPage() {
         return;
       }
 
-      // 2. Update stok & lastCost produk
       const stokBaru = product.stock + qtyValue;
       const { error: updateError } = await supabase
         .from("products")
@@ -124,7 +124,6 @@ export default function BarangMasukPage() {
         return;
       }
 
-      // 3. Catat cashflow keluar
       const { error: cashflowError } = await supabase.from("cashflow").insert({
         type: "out",
         amount: totalValue,
@@ -147,33 +146,31 @@ export default function BarangMasukPage() {
   }
 
   return (
-    <main className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Barang Masuk</h1>
+    <main className="p-6 md:p-8 max-w-4xl">
+      <PageHeader title="Barang Masuk" />
       <Link
-        href="/BarangMasuk/riwayat"
-        className="text-sm text-blue-600 block mb-4"
+        href="/barang-masuk/riwayat"
+        className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text mb-6 transition-all"
       >
-        Lihat Riwayat →
+        Lihat Riwayat Barang Masuk
+        <ArrowRight className="w-3 h-3" />
       </Link>
+
       {loading ? (
-        <p>Memuat produk...</p>
+        <LoadingState message="Memuat produk..." />
       ) : (
-        <div className="border rounded-lg p-4">
-          <div className="space-y-3">
+        <div className="bg-card border border-border rounded-[10px] p-6 shadow-sm">
+          <div className="space-y-5">
             {rows.map((row, index) => (
-              <div key={index} className="flex gap-2 items-end">
+              <div key={index} className="flex gap-4 items-end">
                 <div className="flex-1">
                   {index === 0 && (
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Produk
-                    </label>
+                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Produk</label>
                   )}
                   <select
                     value={row.productId}
-                    onChange={(e) =>
-                      updateRow(index, "productId", e.target.value)
-                    }
-                    className="w-full border rounded px-2 py-2 text-sm"
+                    onChange={(e) => updateRow(index, "productId", e.target.value)}
+                    className="w-full bg-card border border-border text-text rounded-[8px] px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all"
                   >
                     <option value="">Pilih produk</option>
                     {products.map((p) => (
@@ -184,64 +181,62 @@ export default function BarangMasukPage() {
                   </select>
                 </div>
 
-                <div className="w-20">
+                <div className="w-24">
                   {index === 0 && (
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Qty
-                    </label>
+                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Qty</label>
                   )}
                   <input
                     type="number"
                     value={row.qty}
                     onChange={(e) => updateRow(index, "qty", e.target.value)}
                     placeholder="0"
-                    className="w-full border rounded px-2 py-2 text-sm"
+                    className="w-full bg-card border border-border text-text rounded-[8px] px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
                   />
                 </div>
 
-                <div className="w-28">
+                <div className="w-36">
                   {index === 0 && (
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Total (Rp)
-                    </label>
+                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Total (Rp)</label>
                   )}
                   <input
                     type="number"
                     value={row.total}
                     onChange={(e) => updateRow(index, "total", e.target.value)}
                     placeholder="0"
-                    className="w-full border rounded px-2 py-2 text-sm"
+                    className="w-full bg-card border border-border text-text rounded-[8px] px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
                   />
                 </div>
 
                 {rows.length > 1 && (
                   <button
                     onClick={() => hapusBaris(index)}
-                    className="text-red-600 text-sm pb-2"
+                    className="text-danger hover:text-danger/80 pb-2.5 cursor-pointer"
                   >
-                    Hapus
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
             ))}
           </div>
 
-          <button onClick={tambahBaris} className="text-sm text-blue-600 mt-3">
-            + Tambah Baris
+          <button onClick={tambahBaris} className="inline-flex items-center gap-1 text-xs text-accent hover:opacity-80 font-bold mt-4 cursor-pointer">
+            <Plus className="w-3.5 h-3.5" />
+            Tambah Baris
           </button>
 
-          <div className="border-t mt-4 pt-3 flex justify-between font-bold">
+          <div className="border-t border-border mt-6 pt-5 flex justify-between font-bold text-text text-base">
             <span>Grand Total</span>
-            <span>Rp {grandTotal.toLocaleString("id-ID")}</span>
+            <span className="tabular-nums">Rp {grandTotal.toLocaleString("id-ID")}</span>
           </div>
 
-          <button
+          <Button
             disabled={processing}
             onClick={simpanBarangMasuk}
-            className="w-full bg-green-700 text-white rounded py-2 font-medium mt-3 disabled:opacity-40"
+            loading={processing}
+            className="w-full mt-6"
           >
-            {processing ? "Memproses..." : "Simpan Semua"}
-          </button>
+            Simpan Semua
+          </Button>
         </div>
       )}
     </main>

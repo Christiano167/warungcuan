@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Card, PageHeader, LoadingState } from "@/app/components/ui";
 
 type Summary = {
   omsetHariIni: number;
@@ -24,15 +25,14 @@ export default function DashboardPage() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    // 1. Cashflow hari ini (untuk omset, pengeluaran, kas bersih hari ini)
-    const { data: cashflowToday, error: cashflowTodayError } = await supabase
+    // 1. Cashflow hari ini
+    const { data: cashflowToday } = await supabase
       .from("cashflow")
       .select("type, amount, source")
       .eq("status", "completed")
       .gte("created_at", startOfDay.toISOString());
 
-    if (cashflowTodayError) {
-      console.error(cashflowTodayError);
+    if (!cashflowToday) {
       setLoading(false);
       return;
     }
@@ -52,64 +52,40 @@ export default function DashboardPage() {
     const kasBersihHariIni = pemasukanHariIni - pengeluaranHariIni;
 
     // 2. Total transaksi hari ini
-    const { count: totalTransaksiHariIni, error: trxError } = await supabase
+    const { count: totalTransaksiHariIni } = await supabase
       .from("transactions")
       .select("*", { count: "exact", head: true })
       .eq("status", "completed")
       .gte("created_at", startOfDay.toISOString());
 
-    if (trxError) {
-      console.error(trxError);
-      setLoading(false);
-      return;
-    }
-
-    // 3. Total hutang semua pelanggan
-    const { data: customers, error: customersError } = await supabase
+    // 3. Total hutang
+    const { data: customers } = await supabase
       .from("customers")
       .select("total_debt")
       .eq("archived", false);
 
-    if (customersError) {
-      console.error(customersError);
-      setLoading(false);
-      return;
-    }
+    const totalHutang = customers?.reduce((sum, c) => sum + c.total_debt, 0) ?? 0;
 
-    const totalHutang = customers.reduce((sum, c) => sum + c.total_debt, 0);
-
-    // 4. Cash total (SEMUA waktu, bukan cuma hari ini) - untuk Net Worth
-    const { data: allCashflow, error: allCashflowError } = await supabase
+    // 4. Cash total (semua waktu)
+    const { data: allCashflow } = await supabase
       .from("cashflow")
       .select("type, amount")
       .eq("status", "completed");
 
-    if (allCashflowError) {
-      console.error(allCashflowError);
-      setLoading(false);
-      return;
-    }
-
-    const cashIn = allCashflow
+    const cashIn = (allCashflow ?? [])
       .filter((c) => c.type === "in")
       .reduce((sum, c) => sum + c.amount, 0);
-    const cashOut = allCashflow
+    const cashOut = (allCashflow ?? [])
       .filter((c) => c.type === "out")
       .reduce((sum, c) => sum + c.amount, 0);
     const cashTotal = cashIn - cashOut;
 
-    // 5. Nilai stok (Stock × lastCost) - untuk Net Worth
-    const { data: allProducts, error: productsError } = await supabase
+    // 5. Nilai stok
+    const { data: allProducts } = await supabase
       .from("products")
       .select("stock, last_cost");
 
-    if (productsError) {
-      console.error(productsError);
-      setLoading(false);
-      return;
-    }
-
-    const stockValue = allProducts.reduce(
+    const stockValue = (allProducts ?? []).reduce(
       (sum, p) => sum + p.stock * (p.last_cost ?? 0),
       0,
     );
@@ -134,60 +110,62 @@ export default function DashboardPage() {
   }, []);
 
   if (loading || !summary) {
-    return <main className="p-6">Memuat dashboard...</main>;
+    return <main className="p-6"><LoadingState message="Memuat dashboard..." /></main>;
   }
 
   const kekayaanWarung =
     summary.cashTotal + summary.stockValue + summary.piutangTotal;
 
   return (
-    <main className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Dashboard</h1>
+    <main className="p-6 md:p-8 max-w-4xl">
+      <PageHeader title="Dashboard" />
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="border rounded-lg p-3">
-          <div className="text-xs text-gray-500">Omset Hari Ini</div>
-          <div className="text-lg font-bold text-green-700">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <Card>
+          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Omset Hari Ini</div>
+          <div className="text-lg font-bold text-accent mt-1 tabular-nums">
             Rp {summary.omsetHariIni.toLocaleString("id-ID")}
           </div>
-        </div>
-        <div className="border rounded-lg p-3">
-          <div className="text-xs text-gray-500">Pengeluaran</div>
-          <div className="text-lg font-bold text-red-600">
+        </Card>
+        <Card>
+          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Pengeluaran</div>
+          <div className="text-lg font-bold text-danger mt-1 tabular-nums">
             Rp {summary.pengeluaranHariIni.toLocaleString("id-ID")}
           </div>
-        </div>
-        <div className="border rounded-lg p-3">
-          <div className="text-xs text-gray-500">Kas Bersih</div>
-          <div className="text-lg font-bold">
+        </Card>
+        <Card>
+          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Kas Bersih</div>
+          <div className="text-lg font-bold text-text mt-1 tabular-nums">
             Rp {summary.kasBersihHariIni.toLocaleString("id-ID")}
           </div>
-        </div>
-        <div className="border rounded-lg p-3">
-          <div className="text-xs text-gray-500">Total Transaksi</div>
-          <div className="text-lg font-bold">
+        </Card>
+        <Card>
+          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Total Transaksi</div>
+          <div className="text-lg font-bold text-text mt-1 tabular-nums">
             {summary.totalTransaksiHariIni}
           </div>
-        </div>
-        <div className="border rounded-lg p-3 col-span-2">
-          <div className="text-xs text-gray-500">Total Hutang Pelanggan</div>
-          <div className="text-lg font-bold text-red-600">
+        </Card>
+        <Card className="sm:col-span-2">
+          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Total Hutang Pelanggan</div>
+          <div className="text-lg font-bold text-danger mt-1 tabular-nums">
             Rp {summary.totalHutang.toLocaleString("id-ID")}
           </div>
-        </div>
+        </Card>
       </div>
 
-      <div className="border-2 border-green-700 rounded-lg p-4 text-center">
-        <div className="text-sm text-gray-500 mb-1">Kekayaan Warung</div>
-        <div className="text-2xl font-bold text-green-700">
+      <Card variant="highlight" className="max-w-2xl text-center">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Kekayaan Warung</div>
+        <div className="text-2xl font-bold text-accent tabular-nums">
           Rp {kekayaanWarung.toLocaleString("id-ID")}
         </div>
-        <div className="text-xs text-gray-400 mt-2">
-          Cash: Rp {summary.cashTotal.toLocaleString("id-ID")} + Stok: Rp{" "}
-          {summary.stockValue.toLocaleString("id-ID")} + Piutang: Rp{" "}
-          {summary.piutangTotal.toLocaleString("id-ID")}
+        <div className="text-xs text-text-muted mt-4 pt-4 border-t border-border/60">
+          <span className="inline-block mx-2">Cash: <strong className="text-text tabular-nums">Rp {summary.cashTotal.toLocaleString("id-ID")}</strong></span>
+          <span className="inline-block mx-1 text-text-muted/40">•</span>
+          <span className="inline-block mx-2">Stok: <strong className="text-text tabular-nums">Rp {summary.stockValue.toLocaleString("id-ID")}</strong></span>
+          <span className="inline-block mx-1 text-text-muted/40">•</span>
+          <span className="inline-block mx-2">Piutang: <strong className="text-text tabular-nums">Rp {summary.piutangTotal.toLocaleString("id-ID")}</strong></span>
         </div>
-      </div>
+      </Card>
     </main>
   );
 }

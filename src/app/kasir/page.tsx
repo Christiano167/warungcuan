@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button, Input, Card, PageHeader, EmptyState } from "@/app/components/ui";
+import { Search, ShoppingCart, Trash2, X } from "lucide-react";
 
 type Product = {
   id: number;
@@ -23,6 +25,7 @@ export default function KasirPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const ambilProduk = useCallback(async () => {
     setLoading(true);
@@ -43,6 +46,10 @@ export default function KasirPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     ambilProduk();
   }, [ambilProduk]);
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   function tambahKeCart(product: Product) {
     const existing = cart.find((item) => item.product.id === product.id);
@@ -204,137 +211,59 @@ export default function KasirPage() {
   const totalItem = cart.reduce((sum, item) => sum + item.qty, 0);
 
   return (
-    <div style={{ display: "flex", height: "100%", background: "var(--bg)" }}>
-      {/* PRODUK */}
-      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-        <h1
-          style={{
-            fontSize: "18px",
-            fontWeight: 700,
-            color: "var(--text)",
-            marginBottom: "14px",
-          }}
-        >
-          Kasir
-        </h1>
+    <div className="flex h-full bg-bg">
+      {/* PRODUK LIST */}
+      <div className="flex-1 p-5 overflow-y-auto">
+        <PageHeader title="Kasir" />
 
-        <input
-          type="text"
-          placeholder="Cari produk..."
-          style={{
-            width: "100%",
-            height: "40px",
-            padding: "0 14px",
-            borderRadius: "10px",
-            border: "1px solid var(--border)",
-            background: "var(--card)",
-            fontSize: "14px",
-            color: "var(--text)",
-            boxSizing: "border-box",
-            outline: "none",
-            marginBottom: "12px",
-          }}
-        />
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/60" />
+          <input
+            type="text"
+            placeholder="Cari produk..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-10 pl-9 pr-3 rounded-[10px] border border-border bg-card text-sm text-text outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent/50 placeholder:text-text-muted/60"
+          />
+        </div>
 
         {loading ? (
-          <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
-            Memuat produk...
-          </p>
+          <p className="text-sm text-text-muted">Memuat produk...</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {products.map((p) => (
+          <div className="flex flex-col gap-2">
+            {filteredProducts.map((p) => (
               <button
                 key={p.id}
                 onClick={() => tambahKeCart(p)}
-                style={{
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "10px",
-                  padding: "12px 16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all 0.1s",
-                }}
+                className="bg-card border border-border rounded-[10px] p-3 flex justify-between items-center cursor-pointer text-left transition-all hover:border-accent/40 active:scale-[0.99]"
               >
-                <div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "var(--text)",
-                    }}
-                  >
-                    {p.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--text-muted)",
-                      marginTop: "2px",
-                    }}
-                  >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-text">{p.name}</div>
+                  <div className="text-xs text-text-muted mt-0.5 tabular-nums">
                     Stok: {p.stock}
                   </div>
                 </div>
-                <div
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    color: "var(--accent)",
-                  }}
-                >
+                <div className="text-sm font-bold text-accent tabular-nums flex-shrink-0 ml-3">
                   Rp {p.price.toLocaleString("id-ID")}
                 </div>
               </button>
             ))}
+            {filteredProducts.length === 0 && !loading && (
+              <EmptyState message="Produk tidak ditemukan" />
+            )}
           </div>
         )}
       </div>
 
       {/* CART PANEL */}
-      <div
-        style={{
-          width: "280px",
-          background: "var(--card)",
-          borderLeft: "1px solid var(--border)",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-        }}
-      >
+      <div className="w-[280px] bg-card border-l border-border flex flex-col flex-shrink-0">
         {/* Cart Header */}
-        <div
-          style={{
-            padding: "20px 16px 12px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{ fontSize: "15px", fontWeight: 700, color: "var(--text)" }}
-          >
-            Keranjang{" "}
+        <div className="px-4 py-5 pb-3 border-b border-border flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4 text-text" />
+            <span className="text-[15px] font-bold text-text">Keranjang</span>
             {totalItem > 0 && (
-              <span
-                style={{
-                  background: "var(--accent)",
-                  color: "var(--accent-text)",
-                  borderRadius: "50%",
-                  width: "20px",
-                  height: "20px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginLeft: "6px",
-                }}
-              >
+              <span className="bg-accent text-accent-text rounded-full w-5 h-5 text-[11px] font-bold inline-flex items-center justify-center tabular-nums">
                 {totalItem}
               </span>
             )}
@@ -346,13 +275,7 @@ export default function KasirPage() {
                 setShowPayment(false);
                 setCashReceived("");
               }}
-              style={{
-                fontSize: "12px",
-                color: "var(--danger)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className="text-xs text-danger bg-none border-none cursor-pointer hover:opacity-80"
             >
               Kosongkan
             </button>
@@ -360,66 +283,31 @@ export default function KasirPage() {
         </div>
 
         {/* Cart Items */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+        <div className="flex-1 overflow-y-auto px-4 py-3">
           {cart.length === 0 ? (
-            <div
-              style={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--text-muted)",
-                textAlign: "center",
-              }}
-            >
-              <div
-                style={{ fontSize: "32px", opacity: 0.3, marginBottom: "8px" }}
-              >
-                🛒
-              </div>
-              <div style={{ fontSize: "13px" }}>Keranjang kosong</div>
-              <div style={{ fontSize: "11px", marginTop: "4px", opacity: 0.7 }}>
+            <div className="h-full flex flex-col items-center justify-center text-text-muted text-center">
+              <ShoppingCart className="w-8 h-8 text-text-muted/30 mb-2" />
+              <div className="text-[13px]">Keranjang kosong</div>
+              <div className="text-[11px] mt-1 opacity-70">
                 Pilih produk di samping
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            <div className="flex flex-col">
               {cart.map((item) => (
                 <div
                   key={item.product.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "10px 0",
-                    borderBottom: "1px solid var(--border)",
-                  }}
+                  className="flex justify-between items-center py-2.5 border-b border-border last:border-b-0"
                 >
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        color: "var(--text)",
-                      }}
-                    >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium text-text truncate">
                       {item.product.name}
                     </div>
-                    <div
-                      style={{ fontSize: "11px", color: "var(--text-muted)" }}
-                    >
-                      Rp {item.product.price.toLocaleString("id-ID")} ×{" "}
-                      {item.qty}
+                    <div className="text-[11px] text-text-muted tabular-nums">
+                      Rp {item.product.price.toLocaleString("id-ID")} × {item.qty}
                     </div>
                   </div>
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "var(--text)",
-                    }}
-                  >
+                  <div className="text-[13px] font-semibold text-text tabular-nums flex-shrink-0 ml-2">
                     Rp {(item.product.price * item.qty).toLocaleString("id-ID")}
                   </div>
                 </div>
@@ -429,120 +317,51 @@ export default function KasirPage() {
         </div>
 
         {/* Cart Footer */}
-        <div
-          style={{ padding: "12px 16px", borderTop: "1px solid var(--border)" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "4px",
-            }}
-          >
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-              Total Item
-            </span>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-              {totalItem}
-            </span>
+        <div className="px-4 py-3 border-t border-border">
+          <div className="flex justify-between mb-1">
+            <span className="text-xs text-text-muted">Total Item</span>
+            <span className="text-xs text-text-muted tabular-nums">{totalItem}</span>
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: "14px",
-            }}
-          >
-            <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-              Total
-            </span>
-            <span
-              style={{
-                fontSize: "22px",
-                fontWeight: 700,
-                color: "var(--accent)",
-              }}
-            >
+          <div className="flex justify-between items-baseline mb-3.5">
+            <span className="text-[13px] text-text-muted">Total</span>
+            <span className="text-[22px] font-bold text-accent tabular-nums">
               Rp {totalHarga.toLocaleString("id-ID")}
             </span>
           </div>
 
           {!showPayment ? (
-            <button
+            <Button
               disabled={cart.length === 0}
               onClick={() => setShowPayment(true)}
-              style={{
-                width: "100%",
-                height: "44px",
-                background:
-                  cart.length === 0 ? "var(--border)" : "var(--accent)",
-                color:
-                  cart.length === 0
-                    ? "var(--text-muted)"
-                    : "var(--accent-text)",
-                border: "none",
-                borderRadius: "10px",
-                fontSize: "14px",
-                fontWeight: 700,
-                cursor: cart.length === 0 ? "not-allowed" : "pointer",
-              }}
+              className="w-full"
             >
               Bayar
-            </button>
+            </Button>
           ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
+            <div className="flex flex-col gap-2">
               <input
                 type="number"
                 value={cashReceived}
                 onChange={(e) => setCashReceived(e.target.value)}
                 placeholder="Uang diterima"
                 autoFocus
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  padding: "0 12px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--border)",
-                  fontSize: "14px",
-                  color: "var(--text)",
-                  boxSizing: "border-box",
-                  outline: "none",
-                }}
+                className="w-full h-10 px-3 rounded-[8px] border border-border text-sm text-text outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
               />
 
               <button
                 onClick={() => setCashReceived("0")}
-                style={{
-                  fontSize: "12px",
-                  color: "var(--danger)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  textAlign: "left",
-                }}
+                className="text-xs text-danger bg-none border-none cursor-pointer text-left"
               >
                 Bon Semua (Belum Bayar)
               </button>
 
               {cashReceived !== "" && (
                 <div
-                  style={{
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    background:
-                      parseFloat(cashReceived) >= totalHarga
-                        ? "#E8FFF5"
-                        : "var(--danger-light)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    color:
-                      parseFloat(cashReceived) >= totalHarga
-                        ? "#1A7A50"
-                        : "var(--danger)",
-                  }}
+                  className={`px-2.5 py-2 rounded-[8px] text-xs font-semibold ${
+                    parseFloat(cashReceived) >= totalHarga
+                      ? "bg-[#E8FFF5] text-[#1A7A50]"
+                      : "bg-danger-light text-danger"
+                  }`}
                 >
                   {parseFloat(cashReceived) >= totalHarga
                     ? `Kembalian: Rp ${(parseFloat(cashReceived) - totalHarga).toLocaleString("id-ID")}`
@@ -556,66 +375,30 @@ export default function KasirPage() {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Nama pelanggan (bon)"
-                  style={{
-                    width: "100%",
-                    height: "40px",
-                    padding: "0 12px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border)",
-                    fontSize: "13px",
-                    color: "var(--text)",
-                    boxSizing: "border-box",
-                    outline: "none",
-                  }}
+                  className="w-full h-10 px-3 rounded-[8px] border border-border text-[13px] text-text outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
                 />
               )}
 
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
                   onClick={() => {
                     setShowPayment(false);
                     setCashReceived("");
                     setCustomerName("");
                   }}
-                  style={{
-                    flex: 1,
-                    height: "40px",
-                    background: "none",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    color: "var(--text)",
-                    cursor: "pointer",
-                  }}
+                  className="flex-1"
                 >
                   Batal
-                </button>
-                <button
+                </Button>
+                <Button
                   disabled={processing || cashReceived === ""}
                   onClick={bayar}
-                  style={{
-                    flex: 1,
-                    height: "40px",
-                    background:
-                      processing || cashReceived === ""
-                        ? "var(--border)"
-                        : "var(--accent)",
-                    color:
-                      processing || cashReceived === ""
-                        ? "var(--text-muted)"
-                        : "var(--accent-text)",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor:
-                      processing || cashReceived === ""
-                        ? "not-allowed"
-                        : "pointer",
-                  }}
+                  loading={processing}
+                  className="flex-1"
                 >
-                  {processing ? "Proses..." : "Konfirmasi"}
-                </button>
+                  Konfirmasi
+                </Button>
               </div>
             </div>
           )}

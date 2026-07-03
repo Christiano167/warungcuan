@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button, Card, Input, Select, PageHeader, LoadingState, EmptyState } from "@/app/components/ui";
 
 type Product = {
   id: number;
@@ -93,7 +94,6 @@ export default function StockAdjustmentPage() {
 
     setProcessing(true);
 
-    // 1. Insert ke stock_movements
     const { error: movementError } = await supabase
       .from("stock_movements")
       .insert({
@@ -110,7 +110,6 @@ export default function StockAdjustmentPage() {
       return;
     }
 
-    // 2. Update stok produk (TIDAK menyentuh cashflow)
     const { error: updateError } = await supabase
       .from("products")
       .update({ stock: stokBaru })
@@ -132,51 +131,49 @@ export default function StockAdjustmentPage() {
   }
 
   return (
-    <main className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Stock Adjustment</h1>
-      <p className="text-xs text-gray-500 mb-4">
-        Khusus untuk barang rusak, hilang, kadaluarsa, atau selisih stok fisik.
-        Tidak mempengaruhi kas.
-      </p>
+    <main className="p-6 md:p-8 max-w-2xl">
+      <PageHeader
+        title="Stock Adjustment"
+        description="Khusus untuk barang rusak, hilang, kadaluarsa, atau selisih stok fisik. Tidak mempengaruhi kas."
+      />
 
       {loading ? (
-        <p>Memuat data...</p>
+        <LoadingState message="Memuat data..." />
       ) : (
         <>
-          <div className="border rounded-lg p-4 space-y-3 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-1">Produk</label>
-              <select
-                value={selectedProductId}
-                onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              >
-                <option value="">Pilih produk</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} (Stok: {p.stock})
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="bg-card border border-border rounded-[10px] p-6 space-y-5 mb-8 max-w-md shadow-sm">
+            <Select
+              label="Produk"
+              value={selectedProductId}
+              onChange={(e) => setSelectedProductId(e.target.value)}
+            >
+              <option value="">Pilih produk</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} (Stok: {p.stock})
+                </option>
+              ))}
+            </Select>
 
             <div>
-              <label className="block text-sm font-medium mb-1  ">Jenis</label>
+              <label className="block text-xs font-semibold text-text-muted mb-1.5">Jenis</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => setDirection("add")}
-                  className={`flex-1 border rounded py-2 text-sm font-medium ${
-                    direction === "add" ? "bg-green-700 text-white" : "bg-white"
+                  className={`flex-1 py-2 text-xs font-semibold rounded-[8px] transition-all cursor-pointer ${
+                    direction === "add"
+                      ? "bg-accent text-accent-text"
+                      : "bg-transparent border border-border text-text hover:bg-bg/50"
                   }`}
                 >
                   Tambah Stok
                 </button>
                 <button
                   onClick={() => setDirection("subtract")}
-                  className={`flex-1 border rounded py-2 text-sm font-medium ${
+                  className={`flex-1 py-2 text-xs font-semibold rounded-[8px] transition-all cursor-pointer ${
                     direction === "subtract"
-                      ? "bg-red-600 text-white"
-                      : "bg-white"
+                      ? "bg-danger text-white"
+                      : "bg-transparent border border-border text-text hover:bg-bg/50"
                   }`}
                 >
                   Kurangi Stok
@@ -184,69 +181,61 @@ export default function StockAdjustmentPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Jumlah</label>
-              <input
-                type="number"
-                value={qty}
-                onChange={(e) => setQty(e.target.value)}
-                placeholder="0"
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
+            <Input
+              label="Jumlah"
+              type="number"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              placeholder="0"
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Alasan (wajib)
-              </label>
-              <input
-                type="text"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Contoh: barang rusak, kadaluarsa, dll"
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
+            <Input
+              label="Alasan (wajib)"
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Contoh: barang rusak, kadaluarsa, dll"
+            />
 
-            <button
+            <Button
               disabled={processing}
               onClick={simpanAdjustment}
-              className="w-full bg-green-700 text-white rounded py-2 font-medium disabled:opacity-40"
+              loading={processing}
+              className="w-full"
             >
-              {processing ? "Memproses..." : "Simpan Adjustment"}
-            </button>
+              Simpan Adjustment
+            </Button>
           </div>
 
-          <h2 className="font-medium mb-2">Riwayat</h2>
+          <h2 className="font-semibold text-text text-sm mb-4">Riwayat</h2>
           {adjustments.length === 0 ? (
-            <p className="text-gray-400 text-sm">Belum ada riwayat</p>
+            <EmptyState message="Belum ada riwayat" />
           ) : (
-            <ul className="space-y-2">
+            <div className="space-y-3.5 max-w-xl">
               {adjustments.map((a) => (
-                <li
+                <Card
                   key={a.id}
-                  className={`border rounded-lg p-3 text-sm ${
-                    a.status === "void" ? "opacity-50" : ""
-                  }`}
+                  variant={a.status === "void" ? "default" : "hoverable"}
+                  className={a.status === "void" ? "opacity-50" : ""}
                 >
-                  <div className="flex justify-between">
-                    <div className="font-medium">
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold text-text flex items-center gap-2">
                       {a.products?.name ?? "Produk tidak diketahui"}
+                      {a.status === "void" && (
+                        <span className="bg-danger-light text-danger text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Void</span>
+                      )}
                     </div>
-                    <div
-                      className={a.qty > 0 ? "text-green-700" : "text-red-600"}
-                    >
-                      {a.qty > 0 ? "+" : ""}
-                      {a.qty}
+                    <div className={`font-bold tabular-nums ${a.qty > 0 ? "text-accent" : "text-danger"}`}>
+                      {a.qty > 0 ? "+" : ""}{a.qty}
                     </div>
                   </div>
-                  <div className="text-gray-500 text-xs">{a.note}</div>
-                  <div className="text-gray-400 text-xs">
+                  {a.note && <div className="text-text-muted text-xs mt-1">{a.note}</div>}
+                  <div className="text-text-muted text-[10px] mt-1.5">
                     {new Date(a.created_at).toLocaleString("id-ID")}
                   </div>
-                </li>
+                </Card>
               ))}
-            </ul>
+            </div>
           )}
         </>
       )}
