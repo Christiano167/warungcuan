@@ -14,15 +14,15 @@ export function PageHeader({ title, description, backHref, backLabel }: PageHead
       {backHref && (
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text mb-2 transition-all"
+          className="inline-flex items-center gap-2 text-xs text-text-muted hover:text-text mb-3 transition-all"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           {backLabel || "Kembali"}
         </Link>
       )}
-      <h1 className="text-[18px] font-bold text-text mb-1">{title}</h1>
+      <h1 className={`text-2xl font-bold text-text ${description ? "mb-2" : "mb-8"}`}>{title}</h1>
       {description && (
-        <p className="text-xs text-text-muted mb-6">{description}</p>
+        <p className="text-sm text-text-muted leading-relaxed mb-8 max-w-2xl">{description}</p>
       )}
     </>
   );

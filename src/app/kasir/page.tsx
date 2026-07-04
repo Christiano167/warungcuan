@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Button, Input, Card, PageHeader, EmptyState } from "@/app/components/ui";
-import { Search, ShoppingCart, Trash2, X } from "lucide-react";
+import { Button, PageHeader, EmptyState } from "@/app/components/ui";
+import { Search, ShoppingCart, Package } from "lucide-react";
 
 type Product = {
   id: number;
@@ -213,37 +213,56 @@ export default function KasirPage() {
   return (
     <div className="flex h-full bg-bg">
       {/* PRODUK LIST */}
-      <div className="flex-1 p-5 overflow-y-auto">
+      <div className="flex-1 p-6 md:p-10 overflow-y-auto">
         <PageHeader title="Kasir" />
 
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/60" />
+        <div className="relative mb-5">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/60" />
           <input
             type="text"
             placeholder="Cari produk..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 rounded-[10px] border border-border bg-card text-sm text-text outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent/50 placeholder:text-text-muted/60"
+            className="w-full h-12 pl-11 pr-4 rounded-lg border border-border bg-card text-sm text-text outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent/30 placeholder:text-text-muted/50"
           />
         </div>
 
         {loading ? (
           <p className="text-sm text-text-muted">Memuat produk...</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            {/* Category Filter Chips */}
+            <div className="flex flex-wrap gap-2.5 mb-4">
+              {["Semua", "Sembako", "Makanan", "Minuman", "Snack"].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className="inline-flex items-center gap-2 bg-bg border border-border rounded-full px-4 py-2 text-xs font-medium text-text-muted hover:border-accent/50 hover:text-accent transition-all"
+                >
+                  <Package className="w-3 h-3" />
+                  {cat}
+                </button>
+              ))}
+            </div>
             {filteredProducts.map((p) => (
               <button
                 key={p.id}
                 onClick={() => tambahKeCart(p)}
-                className="bg-card border border-border rounded-[10px] p-3 flex justify-between items-center cursor-pointer text-left transition-all hover:border-accent/40 active:scale-[0.99]"
+                className="bg-card border border-border rounded-xl p-5 flex justify-between items-center gap-5 cursor-pointer text-left transition-all shadow-sm hover:shadow-md hover:border-accent/40 active:scale-[0.99]"
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-text">{p.name}</div>
-                  <div className="text-xs text-text-muted mt-0.5 tabular-nums">
-                    Stok: {p.stock}
+                  <div className="text-base font-semibold text-text">{p.name}</div>
+                  <div className="text-xs text-text-muted mt-2 tabular-nums">
+                    {p.stock < 5 ? (
+                      <span className="inline-flex items-center gap-1 bg-danger-light text-danger px-2.5 py-1 rounded-full text-[10px] font-medium">
+                        Stok: {p.stock}
+                      </span>
+                    ) : (
+                      <span>Stok: {p.stock}</span>
+                    )}
                   </div>
                 </div>
-                <div className="text-sm font-bold text-accent tabular-nums flex-shrink-0 ml-3">
+                <div className="text-lg font-bold text-accent tabular-nums flex-shrink-0">
                   Rp {p.price.toLocaleString("id-ID")}
                 </div>
               </button>
@@ -256,10 +275,10 @@ export default function KasirPage() {
       </div>
 
       {/* CART PANEL */}
-      <div className="w-[280px] bg-card border-l border-border flex flex-col flex-shrink-0">
+      <div className="w-[320px] bg-card border-l border-border flex flex-col flex-shrink-0">
         {/* Cart Header */}
-        <div className="px-4 py-5 pb-3 border-b border-border flex justify-between items-center">
-          <div className="flex items-center gap-2">
+        <div className="px-5 py-5 border-b-2 border-border flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
             <ShoppingCart className="w-4 h-4 text-text" />
             <span className="text-[15px] font-bold text-text">Keranjang</span>
             {totalItem > 0 && (
@@ -283,12 +302,12 @@ export default function KasirPage() {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-text-muted text-center">
-              <ShoppingCart className="w-8 h-8 text-text-muted/30 mb-2" />
+              <ShoppingCart className="w-9 h-9 text-text-muted/30 mb-3" />
               <div className="text-[13px]">Keranjang kosong</div>
-              <div className="text-[11px] mt-1 opacity-70">
+              <div className="text-[11px] mt-1.5 opacity-70">
                 Pilih produk di samping
               </div>
             </div>
@@ -297,7 +316,7 @@ export default function KasirPage() {
               {cart.map((item) => (
                 <div
                   key={item.product.id}
-                  className="flex justify-between items-center py-2.5 border-b border-border last:border-b-0"
+                  className="flex justify-between items-center gap-3 py-3.5 border-b border-border last:border-b-0"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium text-text truncate">
@@ -307,7 +326,7 @@ export default function KasirPage() {
                       Rp {item.product.price.toLocaleString("id-ID")} × {item.qty}
                     </div>
                   </div>
-                  <div className="text-[13px] font-semibold text-text tabular-nums flex-shrink-0 ml-2">
+                  <div className="text-[13px] font-semibold text-text tabular-nums flex-shrink-0">
                     Rp {(item.product.price * item.qty).toLocaleString("id-ID")}
                   </div>
                 </div>
@@ -317,12 +336,12 @@ export default function KasirPage() {
         </div>
 
         {/* Cart Footer */}
-        <div className="px-4 py-3 border-t border-border">
-          <div className="flex justify-between mb-1">
+        <div className="px-5 py-5 border-t border-border">
+          <div className="flex justify-between mb-2">
             <span className="text-xs text-text-muted">Total Item</span>
             <span className="text-xs text-text-muted tabular-nums">{totalItem}</span>
           </div>
-          <div className="flex justify-between items-baseline mb-3.5">
+          <div className="flex justify-between items-baseline gap-3 mb-5">
             <span className="text-[13px] text-text-muted">Total</span>
             <span className="text-[22px] font-bold text-accent tabular-nums">
               Rp {totalHarga.toLocaleString("id-ID")}
@@ -333,19 +352,19 @@ export default function KasirPage() {
             <Button
               disabled={cart.length === 0}
               onClick={() => setShowPayment(true)}
-              className="w-full"
+              className="w-full shadow-md"
             >
               Bayar
             </Button>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               <input
                 type="number"
                 value={cashReceived}
                 onChange={(e) => setCashReceived(e.target.value)}
                 placeholder="Uang diterima"
                 autoFocus
-                className="w-full h-10 px-3 rounded-[8px] border border-border text-sm text-text outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
+                className="w-full h-12 px-4 rounded-lg border border-border text-sm text-text outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-text-muted/50"
               />
 
               <button
@@ -357,7 +376,7 @@ export default function KasirPage() {
 
               {cashReceived !== "" && (
                 <div
-                  className={`px-2.5 py-2 rounded-[8px] text-xs font-semibold ${
+                  className={`px-3 py-2.5 rounded-lg text-xs font-semibold ${
                     parseFloat(cashReceived) >= totalHarga
                       ? "bg-[#E8FFF5] text-[#1A7A50]"
                       : "bg-danger-light text-danger"
@@ -375,11 +394,11 @@ export default function KasirPage() {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Nama pelanggan (bon)"
-                  className="w-full h-10 px-3 rounded-[8px] border border-border text-[13px] text-text outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
+                  className="w-full h-12 px-4 rounded-lg border border-border text-[13px] text-text outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-text-muted/50"
                 />
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button
                   variant="secondary"
                   onClick={() => {

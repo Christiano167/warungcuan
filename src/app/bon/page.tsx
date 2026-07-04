@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Card, PageHeader, Input, LoadingState, EmptyState, Badge } from "@/app/components/ui";
+import { Card, PageHeader, LoadingState, EmptyState, Badge } from "@/app/components/ui";
 import { Search } from "lucide-react";
 
 type Customer = {
@@ -51,17 +51,17 @@ export default function BonPage() {
   });
 
   return (
-    <main className="p-6 md:p-8">
+    <main className="p-6 md:p-10">
       <PageHeader title="Bon Pelanggan" />
 
-      <div className="relative mb-6 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/60" />
+      <div className="relative mb-8">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/60" />
         <input
           type="text"
           placeholder="Cari nama / HP / catatan..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full h-10 pl-9 pr-3 rounded-[8px] border border-border bg-card text-sm text-text outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent/50 placeholder:text-text-muted/60"
+          className="w-full h-12 pl-11 pr-4 rounded-lg border border-border bg-card text-sm text-text outline-none transition-all focus:border-accent focus:ring-1 focus:ring-accent/30 placeholder:text-text-muted/50"
         />
       </div>
 
@@ -70,25 +70,25 @@ export default function BonPage() {
       ) : filteredCustomers.length === 0 ? (
         <EmptyState message="Tidak ada pelanggan ditemukan" />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCustomers.map((c) => (
             <Link key={c.id} href={`/bon/${c.id}`} className="no-underline">
-              <Card variant="hoverable" className="flex justify-between items-center">
+              <Card variant="hoverable" className="flex justify-between items-center gap-5">
                 <div className="min-w-0">
                   <div className="font-medium text-text">{c.name}</div>
                   {c.phone ? (
-                    <div className="text-xs text-text-muted mt-1">{c.phone}</div>
+                    <div className="text-xs text-text-muted mt-2">{c.phone}</div>
                   ) : (
-                    <div className="text-xs text-text-muted/40 mt-1">Tidak ada nomor HP</div>
+                    <div className="text-xs text-text-muted/40 mt-2">Tidak ada nomor HP</div>
                   )}
                 </div>
-                <div className="text-right flex-shrink-0 ml-3">
+                <div className="text-right flex-shrink-0">
                   <div className={`font-bold tabular-nums ${
                     c.total_debt > 0 ? "text-danger" : "text-accent"
                   }`}>
                     Rp {c.total_debt.toLocaleString("id-ID")}
                   </div>
-                  <Badge variant={c.total_debt > 0 ? "danger" : "success"} className="mt-0.5">
+                  <Badge variant={c.total_debt > 0 ? "danger" : "success"} className="mt-2">
                     {c.total_debt > 0 ? "Aktif" : "Lunas"}
                   </Badge>
                 </div>

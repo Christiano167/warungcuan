@@ -79,13 +79,13 @@ export default function PengeluaranPage() {
   }
 
   return (
-    <main className="p-6 md:p-8 max-w-2xl">
+    <main className="p-6 md:p-10">
       <PageHeader
         title="Pengeluaran Manual"
         description="Untuk pengeluaran non-stok seperti listrik, plastik, transport, dll."
       />
 
-      <div className="bg-card border border-border rounded-[10px] p-6 space-y-5 mb-8 max-w-md shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-7 space-y-6 mb-10 shadow-sm">
         <Input
           label="Nominal (Rp)"
           type="number"
@@ -104,24 +104,24 @@ export default function PengeluaranPage() {
           disabled={processing}
           onClick={simpanPengeluaran}
           loading={processing}
-          className="w-full"
+          className="w-full shadow-sm"
         >
           Catat Pengeluaran
         </Button>
       </div>
 
-      <h2 className="font-semibold text-text text-sm mb-4">Riwayat Pengeluaran</h2>
+      <h2 className="font-semibold text-text text-sm mb-5">Riwayat Pengeluaran</h2>
       {loading ? (
         <LoadingState message="Memuat..." />
       ) : expenses.length === 0 ? (
         <EmptyState message="Belum ada pengeluaran" />
       ) : (
-        <div className="space-y-3.5 max-w-xl">
+        <div className="space-y-4 max-w-xl">
           {expenses.map((e) => (
             <Card
               key={e.id}
               variant={e.status === "void" ? "default" : "hoverable"}
-              className={`flex justify-between items-center text-sm ${
+              className={`flex justify-between items-center gap-5 text-sm ${
                 e.status === "void" ? "opacity-50" : ""
               }`}
             >
@@ -129,14 +129,14 @@ export default function PengeluaranPage() {
                 <div className="font-semibold text-text flex items-center gap-2">
                   {e.note}
                   {e.status === "void" && (
-                    <span className="bg-danger-light text-danger text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Void</span>
+                    <span className="bg-danger-light text-danger text-[9px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">Void</span>
                   )}
                 </div>
-                <div className="text-text-muted text-[10px] mt-1">
+                <div className="text-text-muted text-[10px] mt-2">
                   {new Date(e.created_at).toLocaleString("id-ID")}
                 </div>
               </div>
-              <div className="text-danger font-bold text-sm tabular-nums flex-shrink-0 ml-3">
+              <div className="text-danger font-bold text-sm tabular-nums flex-shrink-0">
                 -Rp {e.amount.toLocaleString("id-ID")}
               </div>
             </Card>

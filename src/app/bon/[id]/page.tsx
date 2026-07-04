@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Button, Card, Input, PageHeader, Badge, LoadingState, EmptyState } from "@/app/components/ui";
-import { ArrowLeft, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 type Customer = {
   id: number;
@@ -95,7 +94,7 @@ export default function DetailPelangganPage() {
     ambilData();
   }
 
-  async function ambilData() {
+  const ambilData = useCallback(async () => {
     setLoading(true);
 
     const { data: customerData, error: customerError } = await supabase
@@ -124,56 +123,48 @@ export default function DetailPelangganPage() {
     }
     setDebts(debtsData);
     setLoading(false);
-  }
+  }, [customerId]);
 
   useEffect(() => {
     ambilData();
-  }, [customerId]);
+  }, [ambilData]);
 
-  if (loading) return <main className="p-6 md:p-8"><LoadingState message="Memuat..." /></main>;
-  if (!customer) return <main className="p-6 md:p-8"><p className="text-text-muted text-sm">Pelanggan tidak ditemukan</p></main>;
+  if (loading) return <main className="p-6 md:p-10"><LoadingState message="Memuat..." /></main>;
+  if (!customer) return <main className="p-6 md:p-10"><p className="text-text-muted text-sm">Pelanggan tidak ditemukan</p></main>;
 
   return (
-    <main className="p-6 md:p-8 max-w-2xl">
-      <Link href="/bon" className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text mb-2 transition-all">
-        <ArrowLeft className="w-3.5 h-3.5" />
-        Kembali ke Daftar Bon
-      </Link>
+    <main className="p-6 md:p-10">
+      <PageHeader title={customer.name} description={customer.phone ?? undefined} backHref="/bon" backLabel="Kembali ke Daftar Bon" />
 
-      <PageHeader title={customer.name} />
-      {customer.phone && (
-        <p className="text-xs text-text-muted mt-1">{customer.phone}</p>
-      )}
-
-      <Card className="my-6 text-center max-w-md">
+      <Card className="mb-8 text-center p-8 rounded-xl shadow-sm bg-gradient-to-br from-card to-bg">
         <div className="text-xs text-text-muted uppercase tracking-wider font-semibold">Total Hutang</div>
-        <div className={`text-2xl font-bold mt-2.5 tabular-nums ${
+        <div className={`text-2xl font-bold mt-4 tabular-nums ${
           customer.total_debt > 0 ? "text-danger" : "text-accent"
         }`}>
           Rp {customer.total_debt.toLocaleString("id-ID")}
         </div>
-        <Badge variant={customer.total_debt > 0 ? "danger" : "success"} className="mt-2">
+        <Badge variant={customer.total_debt > 0 ? "danger" : "success"} className="mt-3">
           {customer.total_debt > 0 ? "Belum Lunas" : "Lunas"}
         </Badge>
       </Card>
 
       {customer.total_debt > 0 && !showPayForm && (
-        <Button onClick={() => setShowPayForm(true)} className="w-full max-w-md mb-6">
+        <Button onClick={() => setShowPayForm(true)} className="w-full max-w-md mb-8">
           Bayar Hutang
         </Button>
       )}
 
       {showPayForm && (
-        <Card className="mb-6 max-w-md">
+        <Card className="mb-8 max-w-md">
           <Input
             label={`Nominal Pembayaran (maks Rp ${customer.total_debt.toLocaleString("id-ID")})`}
             type="number"
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
             placeholder="0"
-            className="mb-4"
+            className="mb-5"
           />
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button
               variant="secondary"
               onClick={() => {
@@ -196,14 +187,14 @@ export default function DetailPelangganPage() {
         </Card>
       )}
 
-      <h2 className="font-semibold text-text text-sm mb-4">Riwayat</h2>
+      <h2 className="font-semibold text-text text-sm mb-5">Riwayat</h2>
       {debts.length === 0 ? (
         <EmptyState message="Belum ada riwayat" />
       ) : (
-        <div className="space-y-3 max-w-xl">
+        <div className="space-y-4 max-w-xl">
           {debts.map((d) => (
-            <Card key={d.id} variant="hoverable" className="flex justify-between items-center text-sm">
-              <div className="flex items-center gap-3">
+            <Card key={d.id} variant="hoverable" className="flex justify-between items-center gap-5 text-sm">
+              <div className="flex items-center gap-4">
                 {d.type === "charge" ? (
                   <ArrowUpCircle className="w-5 h-5 text-danger" />
                 ) : (
@@ -213,12 +204,12 @@ export default function DetailPelangganPage() {
                   <div className="font-medium text-text">
                     {d.type === "charge" ? "Bon Baru" : "Pembayaran"}
                   </div>
-                  <div className="text-text-muted text-[10px] mt-0.5">
+                  <div className="text-text-muted text-[10px] mt-1.5">
                     {new Date(d.created_at).toLocaleString("id-ID")}
                   </div>
                 </div>
               </div>
-              <div className={`font-semibold tabular-nums flex-shrink-0 ml-3 ${
+              <div className={`font-semibold tabular-nums flex-shrink-0 ${
                 d.type === "charge" ? "text-danger" : "text-accent"
               }`}>
                 {d.type === "charge" ? "+" : "-"}Rp {d.amount.toLocaleString("id-ID")}

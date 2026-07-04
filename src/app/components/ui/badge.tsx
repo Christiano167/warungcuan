@@ -21,7 +21,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
         className={`
           inline-flex items-center
           text-[9px] font-bold uppercase tracking-wider
-          px-1.5 py-0.5 rounded
+          px-2.5 py-1 rounded-md
           ${variantStyles[variant]}
           ${className}
         `}

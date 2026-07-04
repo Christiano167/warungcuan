@@ -110,60 +110,87 @@ export default function DashboardPage() {
   }, []);
 
   if (loading || !summary) {
-    return <main className="p-6"><LoadingState message="Memuat dashboard..." /></main>;
+    return <main className="p-6 md:p-10"><LoadingState message="Memuat dashboard..." /></main>;
   }
 
   const kekayaanWarung =
     summary.cashTotal + summary.stockValue + summary.piutangTotal;
 
+  const formatTanggal = (date: Date) => {
+    return date.toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   return (
-    <main className="p-6 md:p-8 max-w-4xl">
+    <main className="p-6 md:p-10">
+      <div className="mb-5">
+        <p className="text-sm text-text-muted">Selamat pagi, Warung Mama 👋</p>
+        <p className="text-xs text-text-muted/70 mt-1">{formatTanggal(new Date())}</p>
+      </div>
       <PageHeader title="Dashboard" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <Card>
-          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Omset Hari Ini</div>
-          <div className="text-lg font-bold text-accent mt-1 tabular-nums">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <Card className="p-7 rounded-xl shadow-sm min-h-[132px] flex flex-col justify-between">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wider leading-relaxed">Omset Hari Ini</div>
+          <div className="text-2xl font-bold text-accent mt-4 tabular-nums">
             Rp {summary.omsetHariIni.toLocaleString("id-ID")}
           </div>
         </Card>
-        <Card>
-          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Pengeluaran</div>
-          <div className="text-lg font-bold text-danger mt-1 tabular-nums">
+        <Card className="p-7 rounded-xl shadow-sm min-h-[132px] flex flex-col justify-between">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wider leading-relaxed">Pengeluaran</div>
+          <div className="text-2xl font-bold text-danger mt-4 tabular-nums">
             Rp {summary.pengeluaranHariIni.toLocaleString("id-ID")}
           </div>
         </Card>
-        <Card>
-          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Kas Bersih</div>
-          <div className="text-lg font-bold text-text mt-1 tabular-nums">
+        <Card className="p-7 rounded-xl shadow-sm min-h-[132px] flex flex-col justify-between">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wider leading-relaxed">Kas Bersih</div>
+          <div className="text-2xl font-bold text-text mt-4 tabular-nums">
             Rp {summary.kasBersihHariIni.toLocaleString("id-ID")}
           </div>
         </Card>
-        <Card>
-          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Total Transaksi</div>
-          <div className="text-lg font-bold text-text mt-1 tabular-nums">
+        <Card className="p-7 rounded-xl shadow-sm min-h-[132px] flex flex-col justify-between">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wider leading-relaxed">Total Transaksi</div>
+          <div className="text-2xl font-bold text-text mt-4 tabular-nums">
             {summary.totalTransaksiHariIni}
-          </div>
-        </Card>
-        <Card className="sm:col-span-2">
-          <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Total Hutang Pelanggan</div>
-          <div className="text-lg font-bold text-danger mt-1 tabular-nums">
-            Rp {summary.totalHutang.toLocaleString("id-ID")}
           </div>
         </Card>
       </div>
 
-      <Card variant="highlight" className="max-w-2xl text-center">
-        <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Kekayaan Warung</div>
-        <div className="text-2xl font-bold text-accent tabular-nums">
+      <Card className="p-7 rounded-xl shadow-sm mb-10">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wider leading-relaxed">Total Hutang Pelanggan</div>
+        <div className="text-2xl font-bold text-danger mt-4 tabular-nums">
+          Rp {summary.totalHutang.toLocaleString("id-ID")}
+        </div>
+      </Card>
+
+      <Card className="p-8 md:p-10 rounded-xl shadow-lg bg-gradient-to-br from-card to-bg max-w-3xl mx-auto">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">Kekayaan Warung</div>
+        <div className="text-4xl font-black text-accent tabular-nums mb-8 text-center">
           Rp {kekayaanWarung.toLocaleString("id-ID")}
         </div>
-        <div className="text-xs text-text-muted mt-4 pt-4 border-t border-border/60">
-          <span className="inline-block mx-2">Cash: <strong className="text-text tabular-nums">Rp {summary.cashTotal.toLocaleString("id-ID")}</strong></span>
-          <span className="inline-block mx-1 text-text-muted/40">•</span>
-          <span className="inline-block mx-2">Stok: <strong className="text-text tabular-nums">Rp {summary.stockValue.toLocaleString("id-ID")}</strong></span>
-          <span className="inline-block mx-1 text-text-muted/40">•</span>
-          <span className="inline-block mx-2">Piutang: <strong className="text-text tabular-nums">Rp {summary.piutangTotal.toLocaleString("id-ID")}</strong></span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="bg-card border border-border rounded-lg p-5 text-center min-w-[120px]">
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Cash</div>
+            <div className="text-sm font-bold text-text tabular-nums mt-2">
+              Rp {summary.cashTotal.toLocaleString("id-ID")}
+            </div>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-5 text-center min-w-[120px]">
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Stok</div>
+            <div className="text-sm font-bold text-text tabular-nums mt-2">
+              Rp {summary.stockValue.toLocaleString("id-ID")}
+            </div>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-5 text-center min-w-[120px]">
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Piutang</div>
+            <div className="text-sm font-bold text-text tabular-nums mt-2">
+              Rp {summary.piutangTotal.toLocaleString("id-ID")}
+            </div>
+          </div>
         </div>
       </Card>
     </main>

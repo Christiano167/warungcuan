@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Button, Card, Input, Select, PageHeader, LoadingState } from "@/app/components/ui";
+import { Button, PageHeader, LoadingState } from "@/app/components/ui";
 import { ArrowRight, Plus, Trash2 } from "lucide-react";
 
 type Product = {
@@ -146,11 +146,11 @@ export default function BarangMasukPage() {
   }
 
   return (
-    <main className="p-6 md:p-8 max-w-4xl">
+    <main className="p-6 md:p-10">
       <PageHeader title="Barang Masuk" />
       <Link
         href="/barang-masuk/riwayat"
-        className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text mb-6 transition-all"
+        className="inline-flex items-center gap-2 text-xs text-text-muted hover:text-text mb-8 transition-all"
       >
         Lihat Riwayat Barang Masuk
         <ArrowRight className="w-3 h-3" />
@@ -159,18 +159,18 @@ export default function BarangMasukPage() {
       {loading ? (
         <LoadingState message="Memuat produk..." />
       ) : (
-        <div className="bg-card border border-border rounded-[10px] p-6 shadow-sm">
-          <div className="space-y-5">
+        <div className="bg-card border border-border rounded-xl p-7 shadow-sm">
+          <div className="space-y-6">
             {rows.map((row, index) => (
-              <div key={index} className="flex gap-4 items-end">
+              <div key={index} className="flex flex-col md:flex-row gap-5 md:items-end">
                 <div className="flex-1">
                   {index === 0 && (
-                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Produk</label>
+                    <label className="block text-xs font-semibold text-text-muted mb-2">Produk</label>
                   )}
                   <select
                     value={row.productId}
                     onChange={(e) => updateRow(index, "productId", e.target.value)}
-                    className="w-full bg-card border border-border text-text rounded-[8px] px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all"
+                    className="w-full h-12 bg-card border border-border text-text rounded-lg px-4 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
                   >
                     <option value="">Pilih produk</option>
                     {products.map((p) => (
@@ -183,34 +183,34 @@ export default function BarangMasukPage() {
 
                 <div className="w-24">
                   {index === 0 && (
-                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Qty</label>
+                    <label className="block text-xs font-semibold text-text-muted mb-2">Qty</label>
                   )}
                   <input
                     type="number"
                     value={row.qty}
                     onChange={(e) => updateRow(index, "qty", e.target.value)}
                     placeholder="0"
-                    className="w-full bg-card border border-border text-text rounded-[8px] px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
+                    className="w-full h-12 bg-card border border-border text-text rounded-lg px-4 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-text-muted/50"
                   />
                 </div>
 
                 <div className="w-36">
                   {index === 0 && (
-                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Total (Rp)</label>
+                    <label className="block text-xs font-semibold text-text-muted mb-2">Total (Rp)</label>
                   )}
                   <input
                     type="number"
                     value={row.total}
                     onChange={(e) => updateRow(index, "total", e.target.value)}
                     placeholder="0"
-                    className="w-full bg-card border border-border text-text rounded-[8px] px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all placeholder:text-text-muted/60"
+                    className="w-full h-12 bg-card border border-border text-text rounded-lg px-4 py-2.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all placeholder:text-text-muted/50"
                   />
                 </div>
 
                 {rows.length > 1 && (
                   <button
                     onClick={() => hapusBaris(index)}
-                    className="text-danger hover:text-danger/80 pb-2.5 cursor-pointer"
+                    className="text-danger hover:text-danger/80 md:pb-3 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -219,12 +219,12 @@ export default function BarangMasukPage() {
             ))}
           </div>
 
-          <button onClick={tambahBaris} className="inline-flex items-center gap-1 text-xs text-accent hover:opacity-80 font-bold mt-4 cursor-pointer">
+          <button onClick={tambahBaris} className="inline-flex items-center gap-2 text-xs text-accent hover:opacity-80 font-bold mt-6 cursor-pointer">
             <Plus className="w-3.5 h-3.5" />
             Tambah Baris
           </button>
 
-          <div className="border-t border-border mt-6 pt-5 flex justify-between font-bold text-text text-base">
+          <div className="border-t border-border mt-8 pt-6 flex justify-between gap-5 font-bold text-text text-base">
             <span>Grand Total</span>
             <span className="tabular-nums">Rp {grandTotal.toLocaleString("id-ID")}</span>
           </div>
@@ -233,7 +233,7 @@ export default function BarangMasukPage() {
             disabled={processing}
             onClick={simpanBarangMasuk}
             loading={processing}
-            className="w-full mt-6"
+            className="w-full mt-7"
           >
             Simpan Semua
           </Button>

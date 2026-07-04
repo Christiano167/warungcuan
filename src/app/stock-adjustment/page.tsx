@@ -131,7 +131,7 @@ export default function StockAdjustmentPage() {
   }
 
   return (
-    <main className="p-6 md:p-8 max-w-2xl">
+    <main className="p-6 md:p-10">
       <PageHeader
         title="Stock Adjustment"
         description="Khusus untuk barang rusak, hilang, kadaluarsa, atau selisih stok fisik. Tidak mempengaruhi kas."
@@ -141,7 +141,7 @@ export default function StockAdjustmentPage() {
         <LoadingState message="Memuat data..." />
       ) : (
         <>
-          <div className="bg-card border border-border rounded-[10px] p-6 space-y-5 mb-8 max-w-md shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-7 space-y-6 mb-10 shadow-sm">
             <Select
               label="Produk"
               value={selectedProductId}
@@ -156,11 +156,11 @@ export default function StockAdjustmentPage() {
             </Select>
 
             <div>
-              <label className="block text-xs font-semibold text-text-muted mb-1.5">Jenis</label>
-              <div className="flex gap-2">
+              <label className="block text-xs font-semibold text-text-muted mb-2">Jenis</label>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setDirection("add")}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-[8px] transition-all cursor-pointer ${
+                  className={`flex-1 min-h-11 px-4 py-2.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     direction === "add"
                       ? "bg-accent text-accent-text"
                       : "bg-transparent border border-border text-text hover:bg-bg/50"
@@ -170,7 +170,7 @@ export default function StockAdjustmentPage() {
                 </button>
                 <button
                   onClick={() => setDirection("subtract")}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-[8px] transition-all cursor-pointer ${
+                  className={`flex-1 min-h-11 px-4 py-2.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     direction === "subtract"
                       ? "bg-danger text-white"
                       : "bg-transparent border border-border text-text hover:bg-bg/50"
@@ -201,36 +201,36 @@ export default function StockAdjustmentPage() {
               disabled={processing}
               onClick={simpanAdjustment}
               loading={processing}
-              className="w-full"
+              className="w-full shadow-sm"
             >
               Simpan Adjustment
             </Button>
           </div>
 
-          <h2 className="font-semibold text-text text-sm mb-4">Riwayat</h2>
+          <h2 className="font-semibold text-text text-sm mb-5">Riwayat</h2>
           {adjustments.length === 0 ? (
             <EmptyState message="Belum ada riwayat" />
           ) : (
-            <div className="space-y-3.5 max-w-xl">
+            <div className="space-y-4 max-w-xl">
               {adjustments.map((a) => (
                 <Card
                   key={a.id}
                   variant={a.status === "void" ? "default" : "hoverable"}
                   className={a.status === "void" ? "opacity-50" : ""}
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-5">
                     <div className="font-semibold text-text flex items-center gap-2">
                       {a.products?.name ?? "Produk tidak diketahui"}
                       {a.status === "void" && (
-                        <span className="bg-danger-light text-danger text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Void</span>
+                        <span className="bg-danger-light text-danger text-[9px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">Void</span>
                       )}
                     </div>
                     <div className={`font-bold tabular-nums ${a.qty > 0 ? "text-accent" : "text-danger"}`}>
                       {a.qty > 0 ? "+" : ""}{a.qty}
                     </div>
                   </div>
-                  {a.note && <div className="text-text-muted text-xs mt-1">{a.note}</div>}
-                  <div className="text-text-muted text-[10px] mt-1.5">
+                  {a.note && <div className="text-text-muted text-xs mt-2">{a.note}</div>}
+                  <div className="text-text-muted text-[10px] mt-2">
                     {new Date(a.created_at).toLocaleString("id-ID")}
                   </div>
                 </Card>

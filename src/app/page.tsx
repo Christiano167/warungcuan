@@ -108,10 +108,10 @@ export default function Home() {
   }
 
   return (
-    <main className="p-6 md:p-8">
+    <main className="p-6 md:p-10">
       <PageHeader title="Manajemen Produk" />
 
-      <div className="bg-card border border-border rounded-[10px] p-6 mb-8 space-y-4 shadow-sm max-w-md">
+      <div className="bg-card border border-border rounded-xl p-7 mb-10 space-y-5 shadow-sm">
         <Input
           type="text"
           placeholder="Nama produk"
@@ -130,7 +130,7 @@ export default function Home() {
           value={stock}
           onChange={(e) => setStock(e.target.value)}
         />
-        <Button onClick={tambahProduk} className="w-full">
+        <Button onClick={tambahProduk} className="w-full shadow-sm">
           Tambah Produk
         </Button>
       </div>
@@ -140,24 +140,24 @@ export default function Home() {
       ) : products.length === 0 ? (
         <EmptyState message="Belum ada produk" submessage="Tambah produk pertama Anda" />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((p) => (
-            <Card key={p.id} variant="hoverable">
-              <div className="flex justify-between items-start">
+            <Card key={p.id} variant="hoverable" className="p-5">
+              <div className="flex justify-between items-start gap-4">
                 <div className="min-w-0">
-                  <div className="font-medium text-text truncate">{p.name}</div>
-                  <div className="text-xs text-text-muted mt-1 tabular-nums">Stok: {p.stock}</div>
+                  <div className="font-semibold text-text truncate">{p.name}</div>
+                  <div className="text-xs text-text-muted mt-2 tabular-nums">Stok: {p.stock}</div>
                 </div>
 
                 {editingId === p.id ? (
-                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     <input
                       type="number"
                       value={editPrice}
                       onChange={(e) => setEditPrice(e.target.value)}
-                      className="w-24 bg-card border border-border text-text rounded px-2 py-1 text-sm text-right outline-none focus:border-accent"
+                      className="w-28 h-10 bg-card border border-border text-text rounded-lg px-3 py-1.5 text-sm text-right outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
                     />
-                    <div className="flex gap-2 text-xs">
+                    <div className="flex gap-3 text-xs">
                       <button
                         onClick={() => simpanHargaBaru(p.id)}
                         className="text-accent font-semibold hover:opacity-80 cursor-pointer"
@@ -171,12 +171,12 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="text-right flex-shrink-0">
-                    <div className="font-semibold text-text tabular-nums">
+                    <div className="font-bold text-text tabular-nums">
                       Rp {p.price.toLocaleString("id-ID")}
                     </div>
                     <button
                       onClick={() => mulaiEdit(p)}
-                      className="inline-flex items-center gap-1 text-xs text-accent hover:opacity-85 font-medium mt-1 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs text-accent hover:opacity-85 font-medium mt-2 cursor-pointer"
                     >
                       <Pencil className="w-3 h-3" />
                       Edit Harga
